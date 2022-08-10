@@ -23,7 +23,7 @@
 
 ## Outline
 
-  - Set up the environment and load packages
+  - Set up the environment
   - Exploratory Data Analysis
   - General plots
   - Affirmative voting intention among the UN Security Council versus the World
@@ -31,7 +31,7 @@
   - Regression analysis
 
 
-### Environment
+## Environment
 
 Coded in RStudio 4.2.1.
 
@@ -47,4 +47,19 @@ library("mfx")
 library(plm) 
 library(gridExtra)
 ```
+
+## Exploratory Data Analysis
+
+  How many votes are there by each attribute?
+  
+  ![Table 1](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/eda1.png)
+  
+  Note that we are only examining countries that have voted more than 100 times. Now, let's see which countries are among the top ten (10) with a higher share of 'yes' votes and which are among the bottom ten (10). 
+  
+  ![Figure 1](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/top-10-and-bottom-10-countries-that-voted-yes.png)
+  
+  
+  
+  
+
 
