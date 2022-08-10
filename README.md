@@ -9,8 +9,10 @@
   This project used three datasets from the unvotes package:
   
   • ‘un_votes’: this dataset contains information on the voting history of the United Nations General Assembly. Contains one row for each country-vote pair;
-• ‘un_roll_calls’: this dataset contains information on each roll call vote of the United Nations General Assembly;
-• ‘un_roll_call_issues’: this dataset contains the issue (topic) classifications of roll call votes of the United Nations General Assembly. Many votes had no topic, and some have more than one.
+  
+  • ‘un_roll_calls’: this dataset contains information on each roll call vote of the United Nations General Assembly;
+  
+  • ‘un_roll_call_issues’: this dataset contains the issue (topic) classifications of roll call votes of the United Nations General Assembly. Many votes had no topic, and some have more than one.
 
 ## Background and information on UN Resolutions:
 
@@ -96,6 +98,7 @@ library(gridExtra)
   Here, let's explore the effect of natural disasters of different magnitudes influence how countries - where those disasters took place - vote in UN voting sessions for resolutions concerning environmental issues. This time, the datasets I used are *climate-vote.csv* and *natural-disaster.csv*. Now, I will conduct some regression models. In general, there are two regressions to explore:
 
   (1) pro-climate vote (*pro_climate_vote*) versus the number of disasters (*number_disasters*)
+  
   (2) pro-climate vote (*pro_climate_vote*) versus the existence of a disaster one year before a voting session (*disaster_before_vote*)
 
    For each regression, I chose LPM and PM models because the dependent variable holds binary results. That is, the *pro_climate_vote* variable had the values of either 0 or 1. I decided to include both models in this regression analysis with the view to comparing the results and identifying any noticeable issues. Also, for probit models, I wanted to show a comprehensive comparison of having and not having the average partial effect. Lastly, for the comparison purpose as well, I decided to include two-way fixed-effects models to check the potential heterogeneity bias. Six models might be numerous for a solely regression analysis, but I think it is worthwhile to view the regression results from multiple perspectives. Note that we assume the significance level is 5 percent. 
