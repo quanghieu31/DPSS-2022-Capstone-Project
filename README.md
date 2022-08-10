@@ -4,7 +4,7 @@
   
   This project is based on the an R package dataset (unvotes). In this capstone project you will be working with the package called unvotes. It contains the voting history of countries in the United Nations General Assembly, along with information such as date, description, and topics for each vote. It was put together by David Robinson and you can go to this [webpage](https://cran.r-project.org/web/packages/unvotes/unvotes.pdf) to get more information about it.
   
-  The creator responsible for assembling, cleaning, analyzing, and making this dataset public available was the researcher Erik Voeten ([more information](https://dataverse.harvard.edu/dataset.xhtml?persistentId=hdl:1902.1/12379)
+  The creator responsible for assembling, cleaning, analyzing, and making this dataset public available was the researcher Erik Voeten ([more information)](https://dataverse.harvard.edu/dataset.xhtml?persistentId=hdl:1902.1/12379)
   
   This project used three datasets from the unvotes package: 
   • ‘un_votes’: this dataset contains information on the voting history of the United Nations General Assembly. Contains one row for each country-vote pair;
