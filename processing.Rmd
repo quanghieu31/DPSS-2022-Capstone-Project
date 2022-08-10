@@ -1,0 +1,589 @@
+---
+title: "DPSS 2022: International Policy Capstone Project"
+author: "Hieu Nguyen"
+date: "2022-07-25"
+output: pdf_document
+---
+
+Note: All the necessary libraries and packages used in this project can be found in the first part of the corresponding attached R script. They were not included in this R markdown knitted PDF document because I have hidden the chunk containing them (for ease of viewing). Thank you. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(unvotes)
+library(dplyr)
+library(ggplot2)
+library(widyr)
+library(broom)
+library("mfx")  # call in the marginal effect for the probit model 
+library(plm)    # for fixed-effects models
+
+```
+
+## Quesion 1: Exploratory Data Analysis
+
+Part (a) 
+```{r (a) importing data}
+# import data from library "unvotes"
+un_votes <- un_votes
+```
+
+Part (b)
+```{r (b) checking rcid and votes}
+# rcid/issue count 
+no_issues <- n_distinct(un_votes$rcid) # 6202 distinct issues
+# yes, no, abstain count
+no_votes <- un_votes %>%
+  group_by(vote) %>%
+  count()
+no_votes
+```
+
+Part (c)
+```{r (c) new dataset}
+# create two columns from groups of countries (and filter)
+un_votes_over100 <- un_votes %>%
+  group_by(country) %>%
+  summarise(percent_yes=round(mean(vote=="yes")*100, digits=2), n_votes=n()) %>%
+  filter(n_votes>100)
+
+# new dataset: countries that have voted more than 100 times
+un_votes_over100
+```
+```{r slicing top 10, bottom 10}
+# top 10 and bottom 10 for percent_yes
+un_votes_10 <- un_votes_over100 %>%
+  arrange(desc(percent_yes)) %>%
+  slice(c(1:10), c(n()-9):n()) 
+
+# new column "agreeableness"
+un_votes_10$agreeableness <- ifelse(un_votes_10$percent_yes>50,"Agreeable","Disagreeable")
+
+# final dataset used for plotting
+un_votes_10
+```
+
+```{r plotting 2}
+# theme_set(theme_bw())
+# plotting
+ggplot(un_votes_10, aes(percent_yes, reorder(country, percent_yes), label = percent_yes)) + 
+  geom_point(stat="identity", aes(col = agreeableness), size=5.5) + 
+  geom_text(aes(label=percent_yes), size=1.75, color="white") +
+  scale_color_manual(name="Agreeableness", 
+                     labels=c("Agreeable", "Disagreeable"),
+                  values=c("Agreeable"="#00ba38","Disagreeable"= "#f8766d"))+
+  labs(title="Top 10 and bottom 10 countries that have voted yes") +
+  ylab("Country")+
+  xlab("Share of votes for yes")+
+  theme(plot.title = element_text(hjust=0.6))
+```
+We can see that, on the Country-axis, for the top 10 countries from Seychelles to Belize, the percentages for "yes" votes were very large, above 90 percent. And But until about the threshold of 55 percent can we see other countries that were still considered likely to be agreeable in the voting sessions. This shows the likelihood of having countries with large share of votes for "yes" is high. Meanwhile, the bottom 10 countries were consisted of a mixture of agreeable and disagreeable countries. Again, this implies that there were not many countries that posed an opposition to a voting session. Note that, most of the disagreeable countries were powerhouse (France, United Kingdom, Federal Republic of Germany, and United States). 
+
+\pagebreak
+
+## Question 2: Percentage of "yes" votes in the United Nations (1946-2019)
+
+```{r joining}
+# importing "un_roll_calls" from library "unvotes"
+un_roll_calls <- un_roll_calls
+
+# join "un_roll_call" with "un_votes"
+q2a_joined <- merge(un_roll_calls, un_votes, by="rcid")
+```
+
+```{r percent_yes column}
+# generate year column and percent_yes column
+q2a_joined_year <- q2a_joined
+
+q2a_joined_year$year <- format(as.Date(q2a_joined_year$date, format="%Y/%m/%d"), "%Y")
+q2a_joined_year$year <- as.integer(q2a_joined_year$year)
+
+q2a_joined_year <- q2a_joined_year %>%
+  group_by(year) %>%
+  filter(year%%2==1) %>%   # filtering odd years (for the sake of visualization)
+  summarise(percent_yes=round(mean(vote=="yes")*100, digits=2), n_votes=n()) %>%
+  filter(n_votes>100)
+
+# new dataset used for plotting
+q2a_joined_year
+```
+
+```{r plotting 3}
+# plotting the time-series (1946-2019)
+ggplot(q2a_joined_year, aes(year, percent_yes, group=1)) + 
+  geom_line(size=1.25) +
+  scale_y_continuous(limits=c(55,90)) +
+  scale_x_continuous(limits=c(1947,2019)) +
+  labs(title="Percentage of voting yes in the United Nations (1946-2019)") +
+  ylab("Percentage of voting yes (UN)")+
+  xlab("Year")+
+  theme(plot.title = element_text(hjust=0.4))
+```
+
+\pagebreak
+
+## Question 3: Examining major countries
+Part(a): process data
+```{r importingg}
+# importing new dataset
+un_roll_call_issues <- un_roll_call_issues
+
+# joining un_roll_call_issues and q2a_joined
+q3a_joined <- merge(un_roll_call_issues, q2a_joined, by="rcid")
+
+# list the issues (for my own reference)
+un_roll_call_issues %>% group_by(issue) %>% count()
+```
+```{r joiningg}
+# filtering countries that voted  more than 10 times
+filtering_countries_10 <- q3a_joined %>%
+  group_by(country) %>%
+  summarise(total_vote = n()) %>%
+  filter(total_vote>10)
+
+# final data for part (a)
+q3a_final <- q3a_joined %>%
+  filter(issue!="NA") %>%
+  filter(country %in% filtering_countries_10$country)
+
+# we can also see that the "issue" column does not have any "NA" values if we use: 
+# sapply(q3a_joined, function(x) sum(is.na(x)))
+```
+
+Part (b): calculate percent_yes for 5 countries by 6 issues, then plot
+```{r percent_yes and by 6 issues}
+# calculate percent_yes by 5 countries, for each of 6 issues
+q3b_plot <- q3a_final %>%
+  group_by(country, issue) %>%
+  summarise(percent_yes=round(mean(vote=="yes")*100, digits=2), n_votes=n()) %>%
+  filter(country %in% c("United States", "United Kingdom", "France", "China", "Russia"))
+
+# add agreeableness column
+q3b_plot$agreeableness <- ifelse(q3b_plot$percent_yes>50,"Agreeable","Disagreeable")
+
+# final dataset for plotting
+q3b_plot
+```
+```{r plotting 4}
+# plotting
+ggplot(q3b_plot, aes(percent_yes, reorder(country, percent_yes))) +
+  geom_point(stat="identity", aes(col = agreeableness), size=5.5) + 
+  geom_text(aes(label=percent_yes), size=1) +
+  scale_color_manual(name="Agreeableness", 
+                     labels=c("Agreeable", "Disagreeable"),
+                  values=c("Agreeable"="#00ba38","Disagreeable"= "#f8766d"))+
+  facet_wrap(vars(issue)) +
+  labs(title="Percentage of voting for yes for five countries that formed part of the UNSC") +
+  ylab("Country")+
+  xlab("Share of votes for yes")+
+  theme(plot.title = element_text(hjust=0.4))+
+  theme(legend.title = element_text(size=8)) +
+  theme(legend.text = element_text(size=7)) +
+  theme(strip.text.x = element_text(size = 6.5))
+```
+
+Part (c): including World
+```{r create a new dataframe}
+# create a new dataframe for the non-members of UNSC 
+
+# get World statistics 
+q3c_non_member <- q3a_final %>%
+  filter(!(country %in% c("United States", "United Kingdom", "France", "China", "Russia"))) %>%
+  group_by(issue) %>%
+  summarise(percent_yes=round(mean(vote=="yes")*100, digits=2), n_votes=n()) 
+
+# create a country column for World
+q3c_non_member$country <- c("World")
+
+# add agreeableness column
+q3c_non_member$agreeableness <- ifelse(q3c_non_member$percent_yes>50,"Agreeable","Disagreeable")
+
+# dataframe for the World
+q3c_non_member
+```
+```{r bind_row two dataframes: the member and the non-member}
+# bind rows of the two dataframes: the member and the non-member dataframes
+q3c_plot <- bind_rows(q3b_plot, q3c_non_member, id=NULL)
+
+# final data used for plotting
+q3c_plot
+```
+
+```{r plotting 5}
+# add the World statistics to the 5-member plot
+ggplot(q3c_plot, aes(percent_yes, reorder(country, percent_yes))) +
+  geom_point(stat="identity", aes(col = agreeableness), size=5.5) + 
+  geom_text(aes(label=percent_yes), size=1.5) +
+  scale_color_manual(name="Agreeableness", 
+                     labels=c("Agreeable", "Disagreeable"),
+                  values=c("Agreeable"="#00ba38","Disagreeable"= "#f8766d"))+
+  facet_wrap(vars(issue)) +
+  labs(title="Percentage of voting for yes for 5 UNSC country members and the rest") +
+  ylab("Country")+
+  xlab("Share of votes for yes")+
+  theme(plot.title = element_text(hjust=0.4)) +
+  theme(legend.title = element_text(size=8)) +
+  theme(legend.text = element_text(size=7)) +
+  theme(strip.text.x = element_text(size = 6.5))
+```
+Overall, the World tended to be agreeable on all issues, which might imply that there could be a wide census. In more detail, China and Russia were the two countries that consistently voted "yes", possibly expressing mutual (agreeable) understanding and shared international relation ideologies with each other. Meanwhile, the United Kindom, France, and the United States were giving oppositions to almost all issues. Especially, the United States was the least likely to be agreeable on these issues compared to other powerhouse countries and the World. There were some issues that clearly showed a voting division among these five countries and the World such as Colonialism, Human rights, and Palestinian conflict. 
+
+\pagebreak
+
+## Question 4: what issue is dividing opinions the most in the UN
+
+Part (a): process data
+```{r filter joined dataset}
+# restate the dataset (in question 2: un_votes + un_roll_calls)
+q4a_joined <- q2a_joined
+
+# vector from un_votes that shows the issues (rcid) that had more than 5 votes at a UN session
+rcid_5_votes <- q4a_joined %>%
+  group_by(rcid) %>%
+  summarise(total_vote=n()) %>%
+  filter(total_vote>5)
+
+# using the above filter (sessions with more than 5 votes)
+q4a_final <- q4a_joined %>%
+  filter(rcid %in% rcid_5_votes$rcid)
+```
+
+```{r create two columns}
+# create two columns: year and vote_value
+
+# column year
+q4a_final$year <- format(as.Date(q4a_final$date, format="%Y-%m-%d"), "%Y")
+q4a_final$year <- as.integer(q4a_final$year)
+
+# column vote_value
+q4a_final$vote_value <- ifelse(q4a_final$vote=="yes", 1, ifelse(q4a_final$vote=="no", -1, 0))
+
+# filter the year > 2000 and get the final dataset for part (a)
+q4a_final <- filter(q4a_final, year>2000)
+```
+
+Part (b): 50 most disputed rcids and filter
+```{r disputed top 50}
+# find 50 disputed rcids from "var()" function (higher variance = higher dispute)
+q4b_disputed <- q4a_final %>%
+  group_by(rcid) %>%
+  summarise(variance = var(vote_value)) %>% # var function applied to the "vote_value" column
+  arrange(desc(variance)) %>%
+  slice_head(n=50)   # pick the 50 most disputed issues
+
+# filter un_roll_calls (for more details) that only contained the 50 disputed rcids above
+q4b_disputed_topics <- un_roll_calls %>%
+  filter(rcid %in% q4b_disputed$rcid) %>%
+  dplyr::select(rcid, date, short, descr)   
+
+# top 50 disputed issues in the 21st century
+q4b_disputed_topics
+```
+(Note that I included the "desc" column because some issues did not have any meaningful "short" value. I think excluding the "NA" values in the "short" column would not be very reasonable, especially when we also had a "descr" column.)
+
+Part (c): get correlation between the voting pattern of Russia and other countries
+```{r analyze and Russia}
+# find what country had a voting pattern opposite to Russia
+
+# process un_votes
+q4c_disputed <- un_votes %>%
+  filter(rcid %in% q4b_disputed_topics$rcid)
+
+# creata a new column "vote_value"
+q4c_disputed$vote_value <- ifelse(q4c_disputed$vote=="yes", 1, 
+                                  ifelse(q4c_disputed$vote=="no", -1, 0))
+
+# pair_wise: correlations of pairs of items and filter to get Russia
+q4c_corr_russia <- q4c_disputed %>%
+  pairwise_cor(country, rcid, vote_value) %>%
+  filter(item2=="Russia")
+
+# other countries' voting pattern correlation with Russia
+q4c_corr_russia
+```
+(Note: To my understanding of correlation, I think that correlation can be negative. A negative correlation indicates a relationship in which the voting patterns of Russia and other countries were conflicting or going in an opposite direction.)  
+
+Part (d): plot the correlation with Russia's pattern of voting
+```{r plotting 6}
+# slice top 10 and bottom 10 regarding share of correlation with Russia's voting pattern
+q4d_corr_russia_plot <- q4c_corr_russia %>%
+  arrange(desc(correlation)) %>%
+  slice(c(1:10), c(n()-9):n()) %>%  # top 10 and bottom 10 correlations with Russia
+  mutate(share_level = ifelse(correlation > 0, "High", "Low")) 
+  # add a new column to color the high/low share of correlation
+
+# plot
+ggplot(q4d_corr_russia_plot, aes(correlation, reorder(item1, correlation))) +
+  geom_point(stat="identity", aes(col = share_level), size=4) +
+  scale_color_manual(name="Level of share with\n Russia's voting pattern", 
+                     labels=c("High", "Low"),
+                     values=c("High"="#00ba38","Low"= "#f8766d")) +
+  labs(title="10 countries with a higher share and 10 countries with a lower share\n 
+       of correlation with Russia's pattern of voting for the top fifty disputed issues\n 
+       in the UN") +
+  ylab("Country")+
+  xlab("Correlation") +
+  theme(plot.title = element_text(hjust=0.001))
+```
+(Note: You can see that I made an assumption that if the correlation is higher than 0, it is considered a high share, and vice versa.) 
+
+\pagebreak
+
+## Question 5: The effect of natural disasters of different magnitudes influence how countries - where those disasters took place - vote in UN voting sessions for resolutions concerning environmental issues
+
+Part (a): import climate-vote.csv
+```{r importing and viewing}
+# import and familiarize "climate-vote.csv" file
+climate_vote <- read.csv("C:\\dpss-capstone\\climate-vote.csv")
+```
+
+Part (b): import natual-disaster.csv
+```{r importing and viewingg}
+# import and familiarize "natural-disaster.csv" file
+natural_disaster <- read.csv("C:\\dpss-capstone\\natural-disaster.csv")
+```
+
+Part (c): process data and analyze regressions
+```{r joiningggg}
+# join the two datasets
+joined <- merge(climate_vote, natural_disaster, by=c("rcid", "country_code")) 
+
+# Note that there were 5010 observations in this joined dataframe, rather than 5019 like in dataframes 
+# climate_vote or natural_disaster. This is because there were 9 observations in dataframe 
+# natural_disaster that had value "0" for country_code, which matched nothing with the dataframe
+# climate_vote. Try these two codes to see: 
+# (1) `%!in%` <- Negate(`%in%`) 
+# (2) natural_disaster %>% filter(country_code %!in% joined$country_code)
+```
+
+Now, I will conduct some regression models. In general, there are two regressions to explore:
+
+(1) pro-climate vote (*pro_climate_vote*) versus the number of disasters (*number_disasters*)
+(2) pro-climate vote (*pro_climate_vote*) versus the existence of a disaster one year before a voting session (*disaster_before_vote*)
+
+For each regression, I chose LPM and PM models because the dependent variable holds binary results. That is, the *pro_climate_vote* variable had the values of either 0 or 1. I decided to include both models in this regression analysis with the view to comparing the results and identifying any noticeable issues. Also, for probit models, I wanted to show a comprehensive comparison of having and not having the average partial effect. Lastly, for the comparison purpose as well, I decided to include two-way fixed-effects models to check the potential heterogeneity bias. Six models might be numerous for a solely regression analysis, but I think it is worthwhile to view the regression results from multiple perspectives. Note that we assume the significance level is 5 percent. 
+
+
+**Regression (1):**
+
+* Linear probability model (LPM)
+* Probit model (PM)
+* Probit model with Average Partial Effect (PM with APE)
+* Linear probability model with Fixed Effects (LPM with FE)
+* Probit model with Fixed Effects (PM with FE)
+* Probit model with Average Partial Effect and Fixed Effects (PM with APE and FE)
+
+
+**Linear probability model (LPM)**
+```{r design regression 1.1.1}
+# Regression 1 - linear probability model (LMP)
+lpm_model_1 <- lm(pro_climate_vote ~ number_disasters, data=joined)
+tidy(lpm_model_1)
+```
+On average, holding other factors constant, an increase in the number of natural disasters of a country (within a year before a voting session over a UN resolution regarding environmental issues) by one unit is associated with a decrease in the probability of that country's vote being a pro-climate type by 0.69 percent. The estimated coefficient is statistically significant given the small p-value (0.0131).
+
+
+
+
+**Probit model (PM)**
+```{r design regression 1.2.1}
+# regression 1 - Probit model (PM) without Average Partial Effect (APE)
+probit_model_1 <- glm(pro_climate_vote ~ number_disasters, data=joined, 
+                      binomial(link="probit"))
+tidy(probit_model_1)
+```
+On average, holding other factors constant, an increase in the number of natural disasters in a country by one unit is associated with a decrease in the probability of that country's vote being a pro-climate type by 3.03 percent. The estimated coefficient is statistically significant given the small p-value (0.0144). 
+
+
+
+
+**Probit model with Average Partial Effect (PM with APE)**
+```{r design regression 1.3.1}
+# regression 1 - Probit model (PM) with Average Partial Effect (APE)
+probit_ape_model_1 <- probitmfx(pro_climate_vote ~ number_disasters, 
+                                data=joined, atmean=FALSE)
+tidy(probit_ape_model_1)
+```
+On average, holding other factors constant, an increase in the number of natural disasters in a country by one unit is associated with a decrease in the probability of that country's vote being a pro-climate type by 0.63 percent. The estimated coefficient is statistically significant given the small p-value (0.0144).
+
+
+
+
+The following regression models are like above but now with two-way fixed effects:
+
+**Linear probability model with Fixed Effects (LPM with FE)**
+```{r design regression 1.1.2}
+# regression 1 - LMP with Fixed Effects (FE)
+lpm_model_1_fe <- lm(pro_climate_vote ~ number_disasters + factor(country_code)
+                     + factor(date), data=joined)
+
+# convert the results to dataframe 
+# change some columns to have 2 digit after decimals (for ease of viewing)
+lpm_model_1_fe_results <- tidy(lpm_model_1_fe) %>%
+  mutate(estimate = format(round(estimate, 4), nsmall=2)) %>%
+  mutate(p.value = format(round(p.value, 4), nsmall=2))
+
+# show results
+lpm_model_1_fe_results
+```
+On average, holding other factors constant, an increase in the number of natural disasters in a country by one unit is associated with a decrease in the probability of that country's vote being a pro-climate type by 0.23 percent. The estimated coefficient is not statistically significant given the large p-value (0.6005).
+
+
+
+
+**Probit model with Fixed Effects (PM with FE)**
+```{r desgin regression 1.2.2}
+# regression 1 - PM with FE
+probit_model_1_fe <- glm(pro_climate_vote ~ number_disasters + factor(country_code) 
+                         + factor(date), data=joined, binomial(link="probit"))
+
+# convert the results to dataframe and 
+# change some columns to have 2 digit after decimals (for ease of viewing)
+probit_model_1_fe_results <- tidy(probit_model_1_fe) %>%
+  mutate(estimate = format(round(estimate, 4), nsmall=2)) %>%
+  mutate(p.value = format(round(p.value, 4), nsmall=2))
+
+# show results
+probit_model_1_fe_results
+```
+On average, holding other factors constant, an increase in the number of natural disasters in a country by one unit is associated with a decrease in the probability of that country's vote being a pro-climate type by 0.68 percent. The estimated coefficient is not statistically significant given the large p-value (0.7993).
+
+
+
+
+**Probit model with Average Partial Effect and Fixed Effects (PM with APE and FE)**
+```{r desgin regression 1.3.2}
+# regression 1 - PM with APE and FE
+probit_ape_model_1_fe <- probitmfx(pro_climate_vote ~ number_disasters 
+                                   + factor(country_code) + factor(date), 
+                                   data=joined, atmean=FALSE)
+
+# convert the results to dataframe and 
+# change some columns to have 2 digit after decimals (for ease of viewing)
+probit_ape_model_1_fe_results <- tidy(probit_ape_model_1_fe) %>%
+  mutate(estimate = format(round(estimate, 4), nsmall=2)) %>%
+  mutate(p.value = format(round(p.value, 4), nsmall=2))
+
+# show results
+probit_ape_model_1_fe_results
+```
+On average, holding other factors constant, an increase in the number of natural disasters in a country by one unit is associated with a decrease in the probability of that country's vote being a pro-climate type by 0.10 percent. The estimated coefficient is not statistically significant given the large p-value (0.7992).
+
+So, to conclude, we see that despite the variations in statistical significance across six models, the relationship between the number of disasters and the chance of having a pro-climate vote is likely to be negative and the difference is small.  
+
+********************************************************************************
+
+**Regression 2:**
+
+* Linear probability model (LPM)
+* Probit model (PM)
+* Probit model with Average Partial Effect (PM with APE)
+* Linear probability model with Fixed Effects (LPM with FE)
+* Probit model with Fixed Effects (PM with FE)
+* Probit model with Average Partial Effect and Fixed Effects (PM with APE and FE)
+
+
+**Linear probability model (LPM)**
+```{r regression 2.1 no FE}
+# regression 2 - LPM 
+lpm_model_2 <- lm(pro_climate_vote ~ disaster_before_vote, data=joined)
+tidy(lpm_model_2)
+```
+On average, holding other factors constant, the existence of a disaster one year before a voting session in a country is associated with a decrease in the probability of that country's vote being a pro-climate type by 1.71 percent. The estimated coefficient is not statistically significant given the large p-value (0.0739).
+
+
+
+
+**Probit model (PM)**
+```{r regression 2.2 no FE}
+# regression 2 - PM without APE
+probit_model_2 <- glm(pro_climate_vote ~ disaster_before_vote, data=joined, 
+                      binomial(link="probit"))
+tidy(probit_model_2)
+```
+On average, holding other factors constant, the existence of a disaster one year before a voting session in a country is associated with a decrease in the probability of that country's vote being a pro-climate type by 8.21 percent. The estimated coefficient is not statistically significant given the large p-value (0.0746).
+
+
+
+
+**Probit model with Average Partial Effect (PM with APE)**
+```{r regression 2.3 no FE}
+# regression 2 - PM with APE
+probit_ape_model_2 <- probitmfx(pro_climate_vote ~ disaster_before_vote, 
+                                data=joined, atmean=FALSE)
+tidy(probit_ape_model_2)
+```
+On average, holding other factors constant, the existence of a disaster one year before a voting session in a country is associated with a decrease in the probability of that country's vote being a pro-climate type by 1.71 percent. The estimated coefficient is not statistically significant given the large p-value (0.0773).
+
+
+
+
+The same regression models like above but now with fixed effects:
+
+**Linear probability model with Fixed Effects (LPM with FE)**
+```{r regression 2.1 with FE}
+# regression 2 - LMP with FE
+lpm_model_2_fe <- lm(pro_climate_vote ~ disaster_before_vote + 
+                       factor(country_code) + factor(date), data=joined)
+
+# convert the results to dataframe and 
+# change some columns to have 2 digit after decimals (for ease of viewing)
+lpm_model_2_fe_results <- tidy(lpm_model_2_fe) %>%
+  mutate(estimate = format(round(estimate, 4), nsmall=2)) %>%
+  mutate(p.value = format(round(p.value, 4), nsmall=2))
+
+# show results
+lpm_model_2_fe_results
+```
+On average, holding other factors constant, the existence of a disaster one year before a voting session in a country is associated with a decrease in the probability of that country's vote being a pro-climate type by 1.52 percent. The estimated coefficient is not statistically significant given the large p-value (0.2067).
+
+
+
+
+**Probit model with Fixed Effects (PM with FE)**
+```{r regression 2.2 with FE}
+# regression 2 - PM with FE
+probit_model_2_fe <- glm(pro_climate_vote ~ disaster_before_vote 
+                         + factor(country_code) + factor(date), data=joined, 
+                         binomial(link="probit"))
+
+# convert the results to dataframe and 
+# change some columns to have 2 digit after decimals (for ease of viewing)
+probit_model_2_fe_results <- tidy(probit_model_2_fe) %>%
+  mutate(estimate = format(round(estimate, 4), nsmall=2)) %>%
+  mutate(p.value = format(round(p.value, 4), nsmall=2))
+
+# show results
+probit_model_2_fe_results
+```
+On average, holding other factors constant, the existence of a disaster one year before a voting session in a country is associated with a decrease in the probability of that country's vote being a pro-climate type by 9.75 percent. The estimated coefficient is not statistically significant given the large p-value (0.2113).
+
+
+
+
+**Probit model with Average Partial Effect and Fixed Effects (PM with APE and FE)**
+```{r regression 2.3 with FE}
+# regression 2 - PM with APE and FE
+probit_ape_model_2_fe <- probitmfx(pro_climate_vote ~ disaster_before_vote 
+                                   + factor(country_code) + factor(date), 
+                                   data=joined, atmean=FALSE)
+
+# convert the results to dataframe and 
+# change some columns to have 2 digit after decimals (for ease of viewing)
+probit_ape_model_2_fe_results <- tidy(probit_ape_model_2_fe) %>%
+  mutate(estimate = format(round(estimate, 4), nsmall=2)) %>%
+  mutate(p.value = format(round(p.value, 4), nsmall=2))
+
+# show results
+probit_ape_model_2_fe_results
+```
+On average, holding other factors constant, the existence of a disaster one year before a voting session in a country is associated with a decrease in the probability of that country's vote being a pro-climate type by 1.43 percent. The estimated coefficient is not statistically significant given the large p-value (0.2140).
+
+In conclusion, we see that the results were relatively consistent among LPM, PM with APE, LPM with FE, and PM with APE and FE. However, the estimated coefficients of all models were not statistically significant. This means we probably need more control variables. 
+
+\pagebreak
+
+Thank you very much for preparing this fun capstone project. I have learned a lot!
+
+I will remember all of you. Wish you all the best!
