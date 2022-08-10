@@ -1,56 +1,50 @@
-# DPSS_2022_CapstoneProject
-
-# DPSS_Summer_Capstone
+# DPSS 2022 Capstone Project: Analyze international policies
 
 ![UChicago Harris](https://github.com/wang8063/DPSS_Summer_Capstone/blob/master/IMAGES/DPSS.png)
   
-  This is the capstone of DPSS in 2019 about Hate Crime in USA which is designed by Daniel Snow
-
-## Background:
-
-  Recent years, according to the FBI or Justice Research and Statistics Association data published, we can see the hate crime rate is increasing and each year, across America, an average of 250,000 people are victimized by hate crimes – criminal expressions of bigotry that terrorize entire communities and fray the social fabric of our country. In order to figure out what is the most important feature in the hate crime and in what extend this feature influences the hate crime rate, we run multi linear regression from income equality, degree, race raio, religious, citizen and non- citizen ratio to build the regression model. As well as demographat and republican ratio and Jewish people.
+  This project is based on the an R package dataset (unvotes). In this capstone project you will be working with the package called unvotes. It contains the voting history of countries in the United Nations General Assembly, along with information such as date, description, and topics for each vote. It was put together by David Robinson and you can go to this [webpage](https://cran.r-project.org/web/packages/unvotes/unvotes.pdf) to get more information about it.
   
-  The purpose of making such a policy is to establish guidelines for identifying and investigating hate crimes and assisting victimized individuals and communities. A swift and strong response by law en- forcement can help stabilize and calm the city as well as aid in a victim’s recovery.
+  The creator responsible for assembling, cleaning, analyzing, and making this dataset public available was the researcher Erik Voeten ([more information](https://dataverse.harvard.edu/dataset.xhtml?persistentId=hdl:1902.1/12379)
+  
+  This project used three datasets from the unvotes package: 
+  • ‘un_votes’: this dataset contains information on the voting history of the United Nations General Assembly. Contains one row for each country-vote pair;
+• ‘un_roll_calls’: this dataset contains information on each roll call vote of the United Nations General Assembly;
+• ‘un_roll_call_issues’: this dataset contains the issue (topic) classifications of roll call votes of the United Nations General Assembly. Many votes had no topic, and some have more than one.
+
+## Background and information on UN Resolutions:
+
+  A United Nations General Assembly Resolution is a decision or declaration voted on by all member states of the United Nations in the General Assembly. For instance, [here](https://www.un.org/securitycouncil/content/resolutions-adopted-security-council-2015) you can find the UN resolutions for 2015. The debate of an agenda at the UN is usually followed by the adoption of these resolutions. However, the voting session of such resolutions are done electronically by roll-call (countries can vote ‘yes’, ‘no’ and ‘abstain’). Thus, the voting normally reflects the degree of intergovernmental agreement and the state of global cooperation on a given topic.
 
 ## Main Purpose 
   
-  The following is the purpose of this capstone:
+  Using R programming to
+  • (i) visually explore the dataset so we can have a better understanding of what is the most disputed issue in the UN in the 21st century and which countries seem to have the strongest agreement/disagreement on such issue;
+  • (ii) analyze if and how countries voting pattern are affected for environmental issues.
 
-  In this Capstone Project, you will examine the potential causes/correlates of hate crimes in the United States. The goal is to replicate this analysis from FiveThirtyEight using updated hate crime data and additional regressors. Prior to starting your project, please read this Southern Poverty Law Center brief which provides background information on hate crimes and hate crime data collection in the United States.
-  
-  Data for this project will be collected the Kaiser Family Foundation, FBI, and U.S. Census. You will also need to gather two additional state-level metrics to include in your analysis (from any source).
-  
-In two pages, describe the nature of hate crime data in the United States, including how it is collected and its potential biases (1-2 paragraphs). Next, describe your findings from the tasks below (3-4 paragraphs). Clearly outline your regression specification and detail why you chose your two additional regressors. Suc- cinctly interpret your map as well, noting any geographic anomalies and their potential causes. Embed your regression table, map, and plot in your final memo.
+## Outline
 
-In this project, you can expenct to see how I answer the following questions:
-
-## Tasks:
-
-* 1. loading data and combine the acs and all other variables
-
-* 2. Create a regression incorporating each of your downloaded variables and think about do we need interaction terms? Fixed effects? Include the results of our regression as a nicely formatted table using stargazer.
-
-* 3. Using state-level geographic data from the Census, create a map of hate crimes per 100k population. It should look close to the map in the original article, but with a different style/theme and with potentially different trends.
-
-* 4. Create one additional non-map plot using your state-level data. Try to make something that is mean- ingful and visually striking. Here is where your choice of regressor can really have a large benefit.
-
-* 5. using the FBI hate crimes website, gather the aggregate number of hate crimes for each year since 2008 and create a plot that displays the change in hate crimes per 100k over time.
+  - Set up the environment and load packages
+  - Exploratory Data Analysis
+  - General plots
+  - Affirmative voting intention among the UN Security Council versus the World
+  - Issues that are dividing opinions in the UN
+  - Regression analysis
 
 
 ### Environment
 
-We will mainly use R studio and the version of R for this project is 3.6.0. And use the packages of tidyverse, tidycensus and ggplot
+Coded in RStudio 4.2.1.
 
-```{r include=FALSE, warning=FALSE, message=FALSE}
-library(tm)
-library(SnowballC)
-library(wordcloud)
-library(RColorBrewer)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-library(tidycensus)
-library(stargazer)
+library(unvotes)
+library(dplyr)
 library(ggplot2)
-library(gganimate)
-library(ggrepel)
-library(reshape2)
+library(widyr)
+library(broom)
+library("mfx")
+library(plm) 
+library(gridExtra)
 ```
+
