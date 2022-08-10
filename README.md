@@ -18,14 +18,14 @@
 ## Main Purpose 
   
   Using R programming to
-  • (i) visually explore the dataset so we can have a better understanding of what is the most disputed issue in the UN in the 21st century and which countries seem to have the strongest agreement/disagreement on such issue;
-  • (ii) analyze if and how countries voting pattern are affected for environmental issues.
+  
+  - (i) visually explore the dataset so we can have a better understanding of what is the most disputed issue in the UN in the 21st century and which countries seem to have the strongest agreement/disagreement on such issue;
+  - (ii) analyze if and how countries voting pattern are affected for environmental issues.
 
 ## Outline
 
   - Set up the environment
   - Exploratory Data Analysis
-  - General plots
   - Affirmative voting intention among the UN Security Council versus the World
   - Issues that are dividing opinions in the UN
   - Regression analysis
@@ -58,8 +58,44 @@ library(gridExtra)
   
   ![Figure 1](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/top-10-and-bottom-10-countries-that-voted-yes.png)
   
+  We can see that, on the Country-axis, for the top 10 countries from Seychelles to Belize, the percentages for "yes" votes were very large, above 90 percent. And But until about the threshold of 55 percent can we see other countries that were still considered likely to be agreeable in the voting sessions. This shows the likelihood of having countries with large share of votes for "yes" is high. Meanwhile, the bottom 10 countries were consisted of a mixture of agreeable and disagreeable countries. Again, this implies that there were not many countries that posed an opposition to a voting session. Note that, most of the disagreeable countries were powerhouse (France, United Kingdom, Federal Republic of Germany, and United States). 
   
+  Now, we explore the percentage of 'yes' votes in the UN from 1946 to 2019, using a time series plot. 
   
+  ![Figure 2](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/percentage-of-voting-yes-in-UN-_1946-2019.png)
   
+## Look in more details (the UN issues and the countries in UNSC)
+
+  The six "umbrella" issues that UN have covered the most since 1946.  
+  
+  ![Table 2](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/issues.png)
+  
+  [United Nations Security Council](https://www.un.org/securitycouncil/) holds the power to determine a possible threat to the peace or act of aggression. Basically, the Council can make any necessary call for peaceful means, recommendations, or adjustment of terms of settlement. The council is currently consisted of the United States, Unided Kingdom, France, China, and Russia. 
+  
+  Now, let's explore how these five countries in the UN Security Council have displayed their average percentage of 'yes' votes compared to each other, using *facet_wrap* function. 
+  
+  ![Figure 3](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/yes-among-UNSC.png)
+  
+  We might also want to compare these voting patterns to the world's average percentage of 'yes' votes (the "world" here contains the non-members of UN Security Council). 
+  
+  ![Figure 4](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/yes-among-UNSC-and-world.png)
+  
+## Disputed issues (take Russia as a baseline for comparison)
+
+  We will look into the top 50 issues that have been dividing opinions the most in the UN in the 21st century. To evaluate the dividing issues, I created a column that take value of 1 when the vote was ‘yes’, a value of 0 when the vote was ‘abstain’, and a value of -1 when the vote was ‘no’. Then, I calculated the variance among these votes' numeric values (the higher variance, the higher dispute).  Note that the dataset was not perfect - there were missing values (NA). 
+  
+  ![Table 3](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/top50_disputed.png)
+  
+  Given the history of Russia, I think this country can be used to compare to other countries. In particular, I will analyze what country had a voting pattern opposite to Russia (based on the top 50 disputed topics). Here is a plot that shows how other countries' vote relates to Russia - top 10 countries with a higher share of correlation with Russia's pattern of voting for the top 50 disputed issues and bottom 10 countries as well.
+  
+  ![Figure 5](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/disputed-russia.png)
+  
+## Regression analysis  
+
+  
+
+
+
+
 
 
