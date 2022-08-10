@@ -92,10 +92,87 @@ library(gridExtra)
   
 ## Regression analysis  
 
+  Here, let's explore the effect of natural disasters of different magnitudes influence how countries - where those disasters took place - vote in UN voting sessions for resolutions concerning environmental issues. This time, the datasets I used are *climate-vote.csv* and *natural-disaster.csv*. Now, I will conduct some regression models. In general, there are two regressions to explore:
+
+  (1) pro-climate vote (*pro_climate_vote*) versus the number of disasters (*number_disasters*)
+  (2) pro-climate vote (*pro_climate_vote*) versus the existence of a disaster one year before a voting session (*disaster_before_vote*)
+
+   For each regression, I chose LPM and PM models because the dependent variable holds binary results. That is, the *pro_climate_vote* variable had the values of either 0 or 1. I decided to include both models in this regression analysis with the view to comparing the results and identifying any noticeable issues. Also, for probit models, I wanted to show a comprehensive comparison of having and not having the average partial effect. Lastly, for the comparison purpose as well, I decided to include two-way fixed-effects models to check the potential heterogeneity bias. Six models might be numerous for a solely regression analysis, but I think it is worthwhile to view the regression results from multiple perspectives. Note that we assume the significance level is 5 percent. 
+   
+   In total, I will have the regression results for 6 models for each regression:
+   
+  - Linear probability model (LPM)
+  - Probit model (PM)
+  - Probit model with Average Partial Effect (PM with APE)
+  - Linear probability model with Fixed Effects (LPM with FE)
+  - Probit model with Fixed Effects (PM with FE)
+  - Probit model with Average Partial Effect and Fixed Effects (PM with APE and FE)
+
+ ### Regression (1): pro-climate vote (*pro_climate_vote*) versus the number of disasters (*number_disasters*) 
+ 
+  Linear probability model (LPM)
   
+  ![Table 4](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/lpm_model_1.png)
 
+  Probit model (PM)
+  
+  ![Table 5](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/probit_model_1.png)
 
+  Probit model with Average Partial Effect (PM with APE)
+  
+  ![Table 6](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/probit_ape_model_1.png)
 
+  Linear probability model with Fixed Effects (LPM with FE)
+  
+  ![Table 7](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/lpm_model_1_fe.png)
+  
+  Probit model with Fixed Effects (PM with FE)
+  
+  ![Table 8](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/probit_model_1_fe.png)
+  
+  Probit model with Average Partial Effect and Fixed Effects (PM with APE and FE)*
+  
+  ![Table 9](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/probit_ape_model_1_fe.png)
+  
+  On average, holding other factors constant, an increase in the number of natural disasters in a country by one unit is associated with a decrease in the probability of that country's vote being a pro-climate type by 0.10 percent. The estimated coefficient is not statistically significant given the large p-value (0.7992).
 
+  So, to conclude, we see that despite the variations in statistical significance across six models, the relationship between the number of disasters and the chance of having a pro-climate vote is likely to be negative and the difference is small.
+  
+### Regression (2): pro-climate vote (*pro_climate_vote*) versus the existence of a disaster one year before a voting session (*disaster_before_vote*)
+ 
+  Linear probability model (LPM)
+  
+  ![Table 10](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/lpm_model_2.png)
 
+  Probit model (PM)
+  
+  ![Table 11](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/probit_model_2.png)
+
+  Probit model with Average Partial Effect (PM with APE)
+  
+  ![Table 12](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/probit_ape_model_2.png)
+
+  Linear probability model with Fixed Effects (LPM with FE)
+  
+  ![Table 13](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/lpm_model_2_fe.png)
+  
+  Probit model with Fixed Effects (PM with FE)
+  
+  ![Table 14](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/probit_model_2_fe.png)
+  
+  Probit model with Average Partial Effect and Fixed Effects (PM with APE and FE)*
+  
+  ![Table 15](https://github.com/quanghieu31/DPSS_2022_CapstoneProject/blob/main/images/probit_ape_model_2_fe.png)
+  
+  On average, holding other factors constant, the existence of a disaster one year before a voting session in a country is associated with a decrease in the probability of that country's vote being a pro-climate type by 1.43 percent. The estimated coefficient is not statistically significant given the large p-value (0.2140).
+  
+  In conclusion, we see that the results were relatively consistent among LPM, PM with APE, LPM with FE, and PM with APE and FE. However, the estimated coefficients of all models were not statistically significant. This means we probably need more control variables. 
+
+## Authors
+
+* **Hieu Nguyen** - [Hieu's GitHub](https://github.com/quanghieu31)
+
+## Thanks
+
+* Thanks, https://github.com/wang8063, for the template and inspiration regarding DPSS!
 
